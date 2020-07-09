@@ -31,8 +31,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 
@@ -64,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             //target device founded,cancel scan to save battery!
             scanResultToConnect = result;
             scanLeDeviceCommon(false);
-            connectBleDevice(scanResultToConnect);
+            reConnectBleDevice(scanResultToConnect);
         }
 
     };
@@ -86,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
                 log("start to discover services!");
                 gatt.discoverServices();
             } else {
+                gatt.close();
+                reConnectBleDevice(scanResultToConnect);
                 log("lose connection!");
             }
         }
@@ -95,23 +95,10 @@ public class MainActivity extends AppCompatActivity {
             super.onServicesDiscovered(gatt, status);
             log("onServicesDiscovered:" + gatt.getDevice() + ", status: " + status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                gatt.connect();
-                List<BluetoothGattService> services = gatt.getServices();
-                log("read services !");
-                for (BluetoothGattService service : services) {
-                    log("found " + service.toString());
-                    if (service.getUuid().equals(UUID_SETUP)) {
-                        List<BluetoothGattCharacteristic> cList = service.getCharacteristics();
-                        for (BluetoothGattCharacteristic bgc : cList) {
-                            log(bgc.getUuid().toString());
-                            if (bgc.getUuid().equals(UUID_REQUEST)) {
-                                log("found target service !");
-                                //gatt.setCharacteristicNotification(bgc, true);
-                                targetCharacteristic = bgc;
-                            }
-
-                        }
-                    }
+                BluetoothGattService service = gatt.getService(UUID_SETUP);
+                if (service != null) {
+                    log("target service found!");
+                    targetCharacteristic = service.getCharacteristic(UUID_REQUEST);
                 }
             }
         }
@@ -243,19 +230,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void connectBleDevice(ScanResult scanResultToConnect) {
+    private void reConnectBleDevice(ScanResult scanResultToConnect) {
         if (scanResultToConnect != null)
             targetBluetoothGatt = scanResultToConnect.getDevice().connectGatt(MainActivity.this, false, bluetoothGattCallback);
     }
 
 
     public void sendMsg(View view) {
-        if (targetBluetoothGatt == null || targetCharacteristic == null) {
+        if (targetBluetoothGatt == null)
             return;
-        } else {
-            targetBluetoothGatt.connect();
-            targetCharacteristic.setValue("test");
-            targetBluetoothGatt.writeCharacteristic(targetCharacteristic);
-        }
+
+        BluetoothGattService gattService = targetBluetoothGatt.getService(UUID_SETUP);
+        if (gattService == null)
+            return;
+
+        BluetoothGattCharacteristic characteristic = gattService.getCharacteristic(UUID_REQUEST);
+        if (characteristic == null)
+            return;
+
+        characteristic.setValue("test");
+        targetBluetoothGatt.writeCharacteristic(targetCharacteristic);
     }
 }

@@ -31,7 +31,6 @@ import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_READ;
 import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_WRITE;
 import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ;
 import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE;
-//import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE;
 import static android.bluetooth.BluetoothGattService.SERVICE_TYPE_PRIMARY;
 
 public class MainActivity extends AppCompatActivity {
@@ -68,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
             super.onConnectionStateChange(device, status, newState);
             log("onConnectionStateChange:" + device.getName() + ", status: " + status + ", newState: " + newState);
             toast("onConnectionStateChange" + device.getName() + ", newState:" + newState);
+//            if (newState == BluetoothGatt.STATE_CONNECTED) {
+//                stopBleAd(false);
+//            } else {
+//                startBleAd();
+//            }
         }
 
         @Override
@@ -104,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
             super.onStartFailure(errorCode);
             toast("Start ble ad fail !");
         }
+
     };
 
     @Override
@@ -141,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
     private AdvertiseSettings getAdvertiseSettings() {
         AdvertiseSettings.Builder settingsBuilder = new AdvertiseSettings.Builder();
-        settingsBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY);
+        settingsBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED);
         settingsBuilder.setConnectable(true);
         settingsBuilder.setTimeout(0);
         settingsBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH);
