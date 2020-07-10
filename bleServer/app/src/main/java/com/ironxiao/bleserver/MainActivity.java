@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
@@ -24,13 +25,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_READ;
 import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_WRITE;
 import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ;
 import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE;
+import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE;
 import static android.bluetooth.BluetoothGattService.SERVICE_TYPE_PRIMARY;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,8 +43,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private static final int REQUEST_ENABLE_BT = 0x0;
-    private static final UUID UUID_SETUP = UUID.fromString("00001ff9-0000-1000-8000-00805f9b34fb");
-    private static final UUID UUID_REQUEST = UUID.fromString("00001ffa-0000-1000-8000-00805f9b34fb");
+    private static final UUID UUID_SERVER = UUID.fromString("00001ff9-0000-1000-8000-00805f9b34fb");
+    private static final UUID UUID_WRITE = UUID.fromString("00001ffa-0000-1000-8000-00805f9b34fb");
+    private static final UUID UUID_WRITE_CONTENT = UUID.fromString("00001ffb-0000-1000-8000-00805f9b34fb");
 
 
     private BluetoothManager bluetoothManager;
@@ -51,12 +53,17 @@ public class MainActivity extends AppCompatActivity {
 
     private BluetoothGattServer bluetoothGattServer;
     private BluetoothLeAdvertiser bluetoothLeAdvertiser;
-    private static final BluetoothGattService bluetoothGattService = new BluetoothGattService(UUID_SETUP, SERVICE_TYPE_PRIMARY);
+    private static final BluetoothGattService bluetoothGattService = new BluetoothGattService(UUID_SERVER, SERVICE_TYPE_PRIMARY);
+
+    private static final BluetoothGattCharacteristic bluetoothGattCharacteristic = new BluetoothGattCharacteristic(UUID_WRITE,
+            PROPERTY_WRITE | PROPERTY_READ | PROPERTY_WRITE_NO_RESPONSE,
+            PERMISSION_READ | PERMISSION_WRITE);
+
 
     static {
-        bluetoothGattService.addCharacteristic(new BluetoothGattCharacteristic(UUID_REQUEST,
-                PROPERTY_WRITE | PROPERTY_READ,
-                PERMISSION_READ | PERMISSION_WRITE));
+        bluetoothGattCharacteristic.addDescriptor(new BluetoothGattDescriptor(UUID_WRITE_CONTENT, PERMISSION_READ | PERMISSION_WRITE));
+        bluetoothGattService.addCharacteristic(bluetoothGattCharacteristic);
+
     }
 
 
@@ -67,11 +74,6 @@ public class MainActivity extends AppCompatActivity {
             super.onConnectionStateChange(device, status, newState);
             log("onConnectionStateChange:" + device.getName() + ", status: " + status + ", newState: " + newState);
             toast("onConnectionStateChange" + device.getName() + ", newState:" + newState);
-//            if (newState == BluetoothGatt.STATE_CONNECTED) {
-//                stopBleAd(false);
-//            } else {
-//                startBleAd();
-//            }
         }
 
         @Override
@@ -84,15 +86,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onCharacteristicWriteRequest(BluetoothDevice device,
-                                                 int requestId,
-                                                 BluetoothGattCharacteristic characteristic,
-                                                 boolean preparedWrite,
-                                                 boolean responseNeeded,
-                                                 int offset,
-                                                 byte[] value) {
-            log("onCharacteristicWriteRequest: " + "requestId: " + requestId + ", characteristic: " + characteristic + ", preparedWrite: " + preparedWrite + ", responseNeeded: " + responseNeeded + ", offset: " + offset + ", value: " + Arrays.toString(value));
+        public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
             toast("onCharacteristicWriteRequest: " + new String(value));
+        }
+
+        @Override
+        public void onDescriptorWriteRequest(BluetoothDevice device, int requestId, BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+            super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value);
+            toast("onDescriptorWriteRequest: " + new String(value));
         }
     };
 
@@ -158,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         dataBuilder.setIncludeDeviceName(true);
         dataBuilder.setIncludeTxPowerLevel(true);
         dataBuilder.addManufacturerData(MANUFACTURE_ID, MANUFACTURE.getBytes());
-        dataBuilder.addServiceUuid(new ParcelUuid(UUID_SETUP));
+        dataBuilder.addServiceUuid(new ParcelUuid(UUID_SERVER));
         return dataBuilder.build();
     }
 
