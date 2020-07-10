@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
             //  if (status == BluetoothGatt.GATT_SUCCESS) {
             BluetoothGattService service = gatt.getService(UUID_SERVER);
             if (service != null) {
-                MainActivity.this.onServiceFound(gatt);
+                MainActivity.this.onServiceFound(gatt, service);
             }
             // }
         }
@@ -279,23 +279,14 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
             log("write test msg 2");
             return;
         }
-        BluetoothGattDescriptor bluetoothGattDescriptor = characteristic.getDescriptor(UUID_WRITE_CONTENT);
-        if (bluetoothGattDescriptor == null) {
-            log("write test msg 3");
-            return;
-        }
-        if (bluetoothManager.getConnectionState(targetScanResult.getDevice(), BluetoothProfile.GATT) != BluetoothProfile.STATE_CONNECTED) {
-            log("write test msg 4");
-            return;
-        }
-        log("write test msg 5");
-        bluetoothGattDescriptor.setValue("test".getBytes());
-        targetBluetoothGatt.writeDescriptor(bluetoothGattDescriptor);
+        characteristic.setValue("test");
+        targetBluetoothGatt.writeCharacteristic(characteristic);
     }
 
     @Override
     public void onFound(final ScanResult result) {
         log("onFound:" + result.getDevice());
+        canMsg = false;
         if (targetScanResult == null) {
             targetScanResult = result;
             scanLeDeviceCommon(false);
@@ -315,14 +306,27 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
     @Override
     public void onDisConnect(BluetoothGatt gatt) {
         log("onDisconnect");
+        canMsg = false;
         targetBluetoothGatt.disconnect();
         targetBluetoothGatt = null;
         targetScanResult = null;
     }
 
+    private boolean canMsg;
+
     @Override
-    public void onServiceFound(BluetoothGatt gatt) {
-        targetBluetoothGatt = gatt;
+    public void onServiceFound(BluetoothGatt gatt, BluetoothGattService service) {
+        BluetoothGattCharacteristic bluetoothGattCharacteristic = service.getCharacteristic(UUID_WRITE);
+        if (bluetoothGattCharacteristic != null) {
+            gatt.setCharacteristicNotification(bluetoothGattCharacteristic, true);
+//            gatt.readCharacteristic(bluetoothGattCharacteristic);
+//
+//            for (BluetoothGattDescriptor bluetoothGattDescriptor : bluetoothGattCharacteristic.getDescriptors()) {
+//                bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+//                gatt.writeDescriptor(bluetoothGattDescriptor);
+//                canMsg = true;
+//            }
+        }
         log("onService found");
     }
 }

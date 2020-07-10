@@ -1,6 +1,7 @@
 package com.ironxiao.bleclient;
 
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.le.ScanResult;
 
 public interface ScanProcess {
@@ -10,5 +11,5 @@ public interface ScanProcess {
 
     public void onDisConnect(BluetoothGatt gatt);
 
-    public void onServiceFound(BluetoothGatt gatt);
+    public void onServiceFound(BluetoothGatt gatt, BluetoothGattService service);
 }
