@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
     static {
         bluetoothGattCharacteristic.addDescriptor(new BluetoothGattDescriptor(UUID_WRITE_CONTENT, PERMISSION_READ | PERMISSION_WRITE));
         bluetoothGattService.addCharacteristic(bluetoothGattCharacteristic);
-
     }
 
 

@@ -279,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
             log("write test msg 2");
             return;
         }
-        characteristic.setValue("test");
+        characteristic.setValue("WIFI:S:goke_ofice;T:WPA;P:goke!wifi;H:false;;");
         targetBluetoothGatt.writeCharacteristic(characteristic);
     }
 
@@ -287,11 +287,11 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
     public void onFound(final ScanResult result) {
         log("onFound:" + result.getDevice());
         canMsg = false;
-        if (targetScanResult == null) {
+        if (targetScanResult == null)
             targetScanResult = result;
-            scanLeDeviceCommon(false);
-            connectBleDevice(targetScanResult);
-        }
+        scanLeDeviceCommon(false);
+        connectBleDevice(targetScanResult);
+
 
     }
 
@@ -300,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements ScanProcess {
         log("onConnect: " + gatt.getDevice());
         //       gatt.requestMtu(247);
         targetBluetoothGatt = gatt;
+        gatt.requestMtu(512);
         gatt.discoverServices();
     }
 
